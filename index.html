@@ -82,9 +82,16 @@ p{margin:0 0 12px;} p:last-child{margin-bottom:0;}
 .steps div{display:flex; gap:10px; align-items:flex-start; font-size:14.5px; line-height:1.6;}
 .steps b{font-family:var(--hd); font-weight:900; flex:0 0 auto; width:26px; height:26px; border-radius:50%;
   border:2px solid var(--ink); display:flex; align-items:center; justify-content:center; font-size:13px;}
-.strip{display:flex; gap:10px; overflow-x:auto; padding:14px 2px 16px; margin:0 -16px; padding-left:16px; padding-right:16px;
-  scrollbar-width:none;}
+.strip{overflow:hidden; padding:14px 0 16px; margin:0 -16px; scrollbar-width:none;}
 .strip::-webkit-scrollbar{display:none;}
+.strip .track{display:flex; width:max-content; animation:stripmove 46s linear infinite;}
+.strip .half{display:flex; gap:10px; padding-right:10px;}
+.strip:hover .track, .strip.paused .track{animation-play-state:paused;}
+@keyframes stripmove{from{transform:translateX(0);} to{transform:translateX(-50%);}}
+@media (prefers-reduced-motion: reduce){
+  .strip{overflow-x:auto; padding-left:16px; padding-right:16px;}
+  .strip .track{animation:none;}
+}
 .stripitem{display:grid; justify-items:center; gap:4px;}
 .stripitem .chr{width:68px; height:68px; box-shadow:var(--hard-s); cursor:pointer;}
 .stripitem .chr span{font-size:11px;}
@@ -395,7 +402,7 @@ p{margin:0 0 12px;} p:last-child{margin-bottom:0;}
       <p class="note">MBTIは性格の傾向の話で、当たり外れがある。得意を伸ばす目安として使う。</p>
     </div>
     <p class="sig">hanami.</p>
-    <p class="buildnote">データ更新 2026-09-15 00:27</p>
+    <p class="buildnote">データ更新 2026-09-15 00:34</p>
   </section>
 
   <!-- 5. 一覧 -->
@@ -1044,15 +1051,25 @@ $('sh-back2').addEventListener('click', function(){ show(S.code ? 's-result' : '
 })();
 (function initStrip(){
   var st = $('strip');
+  var track = el('div', 'track'); var half = el('div', 'half');
   TYPES.forEach(function(t){
     var it = el('div', 'stripitem');
     var fig = el('div', 'chr'); var sp = el('span'); fig.appendChild(sp);
     charInto(fig, sp, t.code, 'circle');
-    fig.addEventListener('click', function(){ showType(t.code); });
+    fig.setAttribute('data-code', t.code);
     it.appendChild(fig);
     it.appendChild(el('b', null, t.name));
-    st.appendChild(it);
+    half.appendChild(it);
   });
+  track.appendChild(half);
+  track.appendChild(half.cloneNode(true));
+  st.appendChild(track);
+  st.addEventListener('click', function(e){
+    var c = e.target.closest('.chr[data-code]');
+    if (c) showType(c.getAttribute('data-code'));
+  });
+  st.addEventListener('touchstart', function(){ st.classList.add('paused'); }, {passive:true});
+  st.addEventListener('touchend', function(){ setTimeout(function(){ st.classList.remove('paused'); }, 1500); }, {passive:true});
 })();
 theme(null);
 buildMbti();
